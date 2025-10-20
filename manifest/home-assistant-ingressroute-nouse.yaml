@@ -1,0 +1,18 @@
+# home-assistant-ingressroute.yaml
+# k3s 没有安装ingressroute CRD,不能使用ingressroute
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRoute
+metadata:
+  name: home-assistant-tls
+  namespace: home-assistant
+spec:
+  entryPoints:
+    - websecure  # 443
+  routes:
+    - match: Host(`home.local`) || Host(`*.home.local`) || Host(`10.178.0.4`)
+      kind: Rule
+      services:
+        - name: home-assistant
+          port: 8123
+  tls:
+    secretName: home-tls-secret
