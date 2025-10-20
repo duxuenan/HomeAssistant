@@ -126,7 +126,7 @@ helm install  home-assistant ./home-assistant-13.4.2/ --namespace home-assistant
 helm ls -n home-assistant
 
 ## PVC绑定安装
-helm install home-assistant k8s-at-home/home-assistant \
+helm install home-assistant . \
   --set persistence.config.enabled=true \
   --set persistence.config.size=10Gi \
   --set persistence.config.accessMode=ReadWriteOnce \

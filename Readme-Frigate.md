@@ -61,19 +61,24 @@ helm pull  k8s-at-home/frigate --version 8.2.2  --destination . --untar
 * **默认值安装**
 helm install frigate frigate-8.2.2 \
   --version 8.2.2 \
-  --namespace frigate \
+  --namespace home-assistant \
   --create-namespace \
   -f frigate-8.2.2/values.yaml
 
 * **覆盖values.yaml**
 helm upgrade --install frigate-8.2.2 \
-  --namespace frigate \
+  --namespace home-assistant \
+  --create-namespace \
+  -f frigate-8.2.2/frigate-values.yaml
+
+helm install frigate frigate-8.2.2 \
+  --namespace home-assistant \
   --create-namespace \
   -f frigate-8.2.2/frigate-values.yaml
 
 * **卸载frigate**
 helm ls -A
-helm uninstall frigate-8.2.2 -n frigate
+helm uninstall frigate-8.2.2 -n home-assistant
 
 * **改用manifest安装**
 因为helm安装frigate时，PVC不能按配置设置创建，所以改用manifest安装
@@ -84,3 +89,10 @@ kubectl apply -f frigate-complete.yaml
 kubectl get storageclass local-path -o jsonpath='{.reclaimPolicy}'
 # 输出：Delete
 ❌ 一旦你删除 PVC，底层数据将被立即删除！
+
+### 2.4 **K3s NodePort**
+K3s 默认使用 flannel + service-node-port-range=30000-32767，但默认禁用了 kube-proxy，改用内置的 servicelb 和 traefik 来处理服务暴露。
+
+改成ClusterIP，并使用 Traefik 暴露服务：
+
+kubectl port-forward -n frigate service/frigate 5000:5000

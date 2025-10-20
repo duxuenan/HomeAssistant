@@ -7,17 +7,28 @@ metadata:
 spec:
   ingressClassName: traefik  
   rules:
-    - host: home.local  # 你可以改成自己的域名
+    - host: home.local
       http:
         paths:
+          # Home Assistant 主服务
           - path: /
             pathType: Prefix
             backend:
               service:
-                name: home-assistant  # 替换为你的 Service 名
+                name: home-assistant
                 port:
                   number: 8123
+
+          # Frigate UI
+          - path: /frigate
+            pathType: Prefix
+            backend:
+              service:
+                name: frigate
+                port:
+                  number: 5000
+
   tls:
     - hosts:
         - home.local
-      secretName: home-tls-secret  # 可选：用于 HTTPS 证书
+      secretName: home-tls-secret
