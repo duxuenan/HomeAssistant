@@ -94,17 +94,24 @@ chmod 700 get_helm.sh
 ./get_helm.sh
 ```
 **下载helm仓库到本地）**
+```bash
+$ helm search repo k8s-at-home/home-assistant  --versions
+NAME                      	CHART VERSION	APP VERSION	DESCRIPTION   
+k8s-at-home/home-assistant	13.4.2       	2022.5.4   	Home Assistant
+k8s-at-home/home-assistant	13.4.1       	2022.5.4   	Home Assistant
+k8s-at-home/home-assistant	13.3.0       	2022.5.4   	Home Assistant
+
+helm pull k8s-at-home/home-assistant  --version 13.4.2  --destination . 
+helm pull k8s-at-home/home-assistant  --version 13.4.2  --destination . --untar
+
 helm repo add k8s-at-home https://k8s-at-home.com/charts/
 helm repo update
 helm repo ls 
-helm search repo k8s-at-home/home-assistant
-helm pull k8s-at-home/home-assistant
-tar -zxvf home-assistant-13.4.2.tgz
 cd home-assistant
 cat values.yaml
 cat Chart.yaml
 helm show values k8s-at-home/home-assistant > values.yaml
-
+```
 ### 4.2 **安装 Home Assistant**
 ```bash
 ## 复制 K3s 配置到当前用户的 .kube 目录

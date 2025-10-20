@@ -1,0 +1,38 @@
+# mosquitto-values.yaml
+image:
+  tag: "2.0.14" # 根据需要选择版本
+
+# 启用持久化存储
+persistence:
+  config:
+    enabled: true
+    existingClaim: "" # 如果你希望 Helm 自动创建 PVC，请留空
+    storageClass: local-path            # 自动创建时使用
+    size: 1Gi
+    accessMode: ReadWriteOnce
+    annotations: {}
+
+  data:
+    enabled: true
+    existingClaim: "" # 如果你希望 Helm 自动创建 PVC，请留空
+    storageClass: local-path
+    size: 5Gi
+    accessMode: ReadWriteOnce
+    annotations: {}
+
+  log:
+    enabled: false  # 可选：启用日志持久化
+
+env:
+  MOSQUITTO_USERNAME: mqttuser # 设置用户名
+  MOSQUITTO_PASSWORD: mqtt123 # 设置密码
+
+# 资源限制（可选）
+resources:
+  requests:
+    memory: 128Mi
+    cpu: 100m
+  limits:
+    memory: 256Mi
+    cpu: 200m
+# 你可以在这里设置资源请求和限制

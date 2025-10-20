@@ -1,0 +1,169 @@
+# frigate-complete.yaml
+---
+# 命名空间
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: frigate
+
+---
+# PVCs
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: frigate-config
+  namespace: frigate
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: local-path
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: frigate-cache
+  namespace: frigate
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: local-path
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: frigate-database
+  namespace: frigate
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+  storageClassName: local-path
+  
+---
+# Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frigate
+  namespace: frigate
+  labels:
+    app.kubernetes.io/name: frigate
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: frigate
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: frigate
+    spec:
+      containers:
+      - name: frigate
+        image: docker.io/library/eclipse-mosquitto:2.0.14
+        ports:
+        - containerPort: 5000
+        env:
+        - name: TZ
+          value: Asia/Shanghai
+        # 添加 MQTT 配置（请根据你的环境修改）
+        - name: FRIGATE_MQTT_HOST
+          value: "mqtt-mosquitto.mqtt.svc.cluster.local" 
+        - name: FRIGATE_MQTT_PORT
+          value: "1883"
+        - name: FRIGATE_MQTT_USER
+          value: "mqttuser" 
+        - name: FRIGATE_MQTT_PASSWORD
+          value: "mqtt123"
+        volumeMounts:
+        - name: config
+          mountPath: /config
+        - name: cache
+          mountPath: /tmp/cache
+        - name: database
+          mountPath: /media/frigate/db
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "1"
+          limits:
+            memory: "2Gi"
+            cpu: "2"
+      volumes:
+      - name: config
+        persistentVolumeClaim:
+          claimName: frigate-config
+      - name: cache
+        persistentVolumeClaim:
+          claimName: frigate-cache
+      - name: database
+        persistentVolumeClaim:
+          claimName: frigate-database
+---
+# 内嵌 config.yml 作为 ConfigMap
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: frigate-config-data
+  namespace: frigate
+data:
+  config.yml: |
+    # Frigate 配置文件（内嵌在 Manifest 中）
+    mqtt:
+      host: mqtt-mosquitto.mqtt.svc.cluster.local
+      port: 1883
+      user: mqttuser
+      password: mqttpass
+      topic_prefix: frigate
+      client_id: frigate
+
+    # 存储路径（使用 PVC）
+    database:
+      path: /media/frigate/db/frigate.db
+
+    # 临时缓存
+    tmpfs_cache_size: 1G
+
+    # 摄像头示例
+    cameras:
+      front_door:
+        ffmpeg:
+          inputs:
+            - path: rtsp://admin:password@192.168.1.200/Streaming/Channels/101
+              roles:
+                - detect
+                - rtmp
+        detect:
+          width: 1920
+          height: 1080
+          fps: 5
+        objects:
+          track:
+            - person
+            - car
+---
+# Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: frigate
+  namespace: frigate
+spec:
+  selector:
+    app.kubernetes.io/name: frigate
+  ports:
+    - protocol: TCP
+      port: 5000
+      targetPort: 5000
+      nodePort: 30500
+  type: NodePort

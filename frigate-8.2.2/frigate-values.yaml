@@ -1,0 +1,87 @@
+# frigate-values.yaml
+# 适用于 k8s-at-home/frigate Helm Chart
+# 修复：使用 PVC 持久化 /config 和 /tmp/cache，而非 ConfigMap 或 EmptyDir
+
+# 关键：禁用默认的 ConfigMap，否则 /config 不会使用 PVC
+config:
+  enabled: false  # 必须设为 false，否则 Helm 会优先挂载 ConfigMap 到 /config
+
+# 持久化存储配置
+persistence:
+  # 持久化 /config 目录（存放 config.yml）
+  config:
+    enabled: true
+    existingClaim: ""  # 留空则自动创建 PVC
+    subPath: "config"  # 在 PV 中的子路径
+    accessMode: ReadWriteOnce
+    size: 1Gi
+    storageClass: local-path  # k3s 默认 StorageClass
+
+  # 持久化 /tmp/cache（临时缓存视频片段）
+  cache:
+    enabled: true
+    existingClaim: ""
+    subPath: "cache"
+    accessMode: ReadWriteOnce
+    size: 1Gi
+    storageClass: local-path
+
+  # 持久化 /media/frigate/db（Frigate 数据库）
+  database:
+    enabled: true
+    existingClaim: ""
+    subPath: "database"
+    accessMode: ReadWriteOnce
+    size: 2Gi
+    storageClass: local-path
+
+  # 持久化 /media/frigate/recordings（24/7 录像）
+  media:
+    enabled: false           # 启用前请确保有大容量磁盘
+    # existingClaim: frigate-media-pv-claim  # 可指定已有 PVC
+    subPath: "media"
+    accessMode: ReadWriteOnce
+    size: 100Gi
+    storageClass: local-path
+
+# 部署配置
+deployment:
+  replicas: 1
+  strategy:
+    type: Recreate  # 推荐：避免多实例竞争资源
+
+# 服务配置
+service:
+  main:
+    ports:
+      http:
+        port: 5000
+        targetPort: 5000
+        protocol: TCP
+    type: ClusterIP  # 可改为 NodePort 或 LoadBalancer
+
+# 🖥️ 资源限制（根据你的硬件调整）
+resources: {}
+#  示例（可选）：
+#  limits:
+#    memory: 2Gi
+#    cpu: "2"
+#  requests:
+#    memory: 1Gi
+#    cpu: "1"
+
+# 🐞 容器安全上下文
+podSecurityContext: {}
+securityContext: {}
+
+# # 📦 镜像配置（可选：指定版本）
+# image:
+#   repository: ghcr.io/blakeblackshear/frigate
+#   pullPolicy: IfNotPresent
+#   tag: 0.12.0-amd64  # 建议使用具体版本，避免 latest
+
+# 🔁 其他
+livenessProbe:
+  enabled: true
+startupProbe:
+  enabled: true
