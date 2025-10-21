@@ -1,0 +1,50 @@
+# docker-compose.yaml
+version: '3.9'
+services:
+  frigate:
+    image: ghcr.io/blakeblackshear/frigate:stable
+    container_name: frigate
+    restart: unless-stopped
+    privileged: true # 需要访问设备如GPU、USB等
+    shm_size: "64mb"
+    devices:
+      - /dev/bus/usb:/dev/bus/usb # 如果使用 Coral USB 加速器
+      - /dev/dri:/dev/dri         # 如果使用 Intel iGPU (VA-API)
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /media/frigate/recordings:/media/frigate/recordings:rw
+      - /media/frigate/clips:/media/frigate/clips:rw
+      - ./frigate/config:/config
+      - type: tmpfs
+        target: /tmp/cache
+        tmpfs:
+          size: 64M
+    ports:
+      - "5000:5000"
+      - "1935:1935" # RTMP
+      # - "8554:8554" # RTSP
+      - "8555:8555/tcp"
+      - "8555:8555/udp"
+    environment:
+      - FRIGATE_RTSP_PASSWORD=your_password
+    # 如果使用 NVIDIA GPU
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+  mosquitto:
+    image: eclipse-mosquitto:latest  # 使用最新版 Mosquitto 镜像
+    container_name: mqtt-broker      # 容器名称，方便管理
+    restart: always                  # 自动重启（故障或开机时）
+    ports:
+      - "1883:1883"  # MQTT 协议默认端口（非加密）
+      - "9001:9001"  # WebSocket 端口（可选，用于网页客户端访问）
+    volumes:
+      - ./mosquitto/config:/mosquitto/config 
+      - ./mosquitto/data:/mosquitto/data 
+    environment:
+      - TZ=Asia/Shanghai  # 设置时区（可选，避免日志时间错乱）
+    user: "1000:1000"     # 可选，指定容器内运行用户（避免权限问题，需替换为宿主机用户 UID:GID）

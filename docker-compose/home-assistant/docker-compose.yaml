@@ -1,0 +1,27 @@
+version: '3.9'
+services:
+  homeassistant:
+    container_name: home-assistant
+    image: "homeassistant/home-assistant:stable"
+    volumes:
+      # 挂载配置目录（核心数据）
+      - ./config:/config
+      # 主机时间同步
+      - /etc/localtime:/etc/localtime:ro
+      # 可选：挂载依赖和共享目录（便于管理）
+      - ./deps:/deps
+      - ./share:/share
+      # 🔌 如果你有 Zigbee/Z-Wave USB 棒，取消注释并修改设备名
+      # - /dev/ttyUSB0:/dev/ttyUSB0:rwm
+      # - /dev/serial/by-id/usb-Silicon_Labs_slae.sh_cc2652rb_stick_e174e89f-if00-port0:/dev/ttyUSB0:rwm
+    network_mode: host  # 使用主机网络，确保设备发现正常
+    restart: unless-stopped
+    privileged: true  # 提供必要权限
+    security_opt:
+      - apparmor:unconfined
+      - seccomp:unconfined  # 允许访问更多系统调用
+    environment:
+      # 可选：设置时区（推荐使用 localtime 挂载，此为备用）
+      - TZ=Asia/Shanghai
+    stdin_open: true
+    tty: true

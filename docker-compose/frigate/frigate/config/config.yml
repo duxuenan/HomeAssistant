@@ -1,0 +1,22 @@
+mqtt:
+  host: mosquitto
+  # user: mqttuser
+  # password: mqttpass
+
+detectors:
+  cpu1:
+    type: cpu
+
+cameras:
+  front_door:
+    ffmpeg:
+      inputs:
+        - path: rtsp://admin:123456@192.168.1.10:554/stream1
+          roles:
+            - detect
+            - record
+    detect:
+      width: 1280
+      height: 720
+    record:
+      enabled: True
