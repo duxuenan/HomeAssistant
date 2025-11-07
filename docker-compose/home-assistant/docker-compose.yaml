@@ -2,7 +2,7 @@ version: '3.9'
 services:
   homeassistant:
     container_name: home-assistant
-    image: "homeassistant/home-assistant:stable"
+    image: "ghcr.io/homeassistant/home-assistant:stable"
     volumes:
       # 挂载配置目录（核心数据）
       - ./config:/config
@@ -14,6 +14,8 @@ services:
       # 🔌 如果你有 Zigbee/Z-Wave USB 棒，取消注释并修改设备名
       # - /dev/ttyUSB0:/dev/ttyUSB0:rwm
       # - /dev/serial/by-id/usb-Silicon_Labs_slae.sh_cc2652rb_stick_e174e89f-if00-port0:/dev/ttyUSB0:rwm
+    ports:
+      - 8123:8123
     network_mode: host  # 使用主机网络，确保设备发现正常
     restart: unless-stopped
     privileged: true  # 提供必要权限
